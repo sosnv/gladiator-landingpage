@@ -24,13 +24,15 @@ export function CinematicLanding() {
     const video = videoRef.current;
     if (!video) return;
 
+    video.defaultMuted = true;
     video.muted = true;
+    video.setAttribute("muted", "");
+    video.setAttribute("playsinline", "");
+
     try {
       await video.play();
 
-      // Autoplay can begin before React hydrates and attaches `onPlaying`.
-      // Synchronize the visual state after play() resolves so the video never
-      // remains transparent while it is already running.
+      // Autoplay may begin before React attaches `onPlaying` during hydration.
       if (
         !video.paused &&
         !video.ended &&
@@ -58,9 +60,35 @@ export function CinematicLanding() {
       void playIntro();
     };
 
+    const retryPlayback = () => {
+      const video = videoRef.current;
+      if (motionQuery.matches || !video || !video.paused || video.ended) return;
+      void playIntro();
+    };
+
+    const retryWhenVisible = () => {
+      if (document.visibilityState === "visible") retryPlayback();
+    };
+
     applyMotionPreference();
     motionQuery.addEventListener("change", applyMotionPreference);
-    return () => motionQuery.removeEventListener("change", applyMotionPreference);
+    window.addEventListener("pageshow", retryPlayback);
+    window.addEventListener("pointerdown", retryPlayback, { capture: true });
+    window.addEventListener("touchstart", retryPlayback, {
+      capture: true,
+      passive: true,
+    });
+    window.addEventListener("keydown", retryPlayback, { capture: true });
+    document.addEventListener("visibilitychange", retryWhenVisible);
+
+    return () => {
+      motionQuery.removeEventListener("change", applyMotionPreference);
+      window.removeEventListener("pageshow", retryPlayback);
+      window.removeEventListener("pointerdown", retryPlayback, { capture: true });
+      window.removeEventListener("touchstart", retryPlayback, { capture: true });
+      window.removeEventListener("keydown", retryPlayback, { capture: true });
+      document.removeEventListener("visibilitychange", retryWhenVisible);
+    };
   }, [playIntro]);
 
   useEffect(() => {
@@ -129,6 +157,9 @@ export function CinematicLanding() {
           controlsList="nodownload noplaybackrate noremoteplayback"
           disablePictureInPicture
           tabIndex={-1}
+          onCanPlay={() => {
+            if (state !== "reduced" && state !== "ended") void playIntro();
+          }}
           onPlaying={() => setState("playing")}
           onTimeUpdate={(event) => {
             if (event.currentTarget.currentTime >= SOCIAL_REVEAL_TIME_SECONDS) {
@@ -152,20 +183,19 @@ export function CinematicLanding() {
         aria-hidden={!revealActions}
         inert={!revealActions}
       >
-        {state === "blocked" ? (
-          <button className="intro-play-button" type="button" onClick={() => void playIntro()}>
-            <span aria-hidden="true">▶</span>
-            Odtwórz intro
-          </button>
-        ) : null}
-
         <SocialLinks />
       </section>
 
       <p className="sr-only" aria-live="polite">
-        {state === "ended" ? "Intro zakończone. Linki społecznościowe są dostępne." : ""}
-        {state === "blocked" ? "Automatyczne odtwarzanie zostało zablokowane. Możesz uruchomić intro ręcznie." : ""}
-        {state === "fallback" ? "Film nie został załadowany. Wyświetlono ekran końcowy." : ""}
+        {state === "ended"
+          ? "Intro zakończone. Linki społecznościowe są dostępne."
+          : ""}
+        {state === "blocked"
+          ? "Animacja uruchomi się po pierwszej interakcji ze stroną."
+          : ""}
+        {state === "fallback"
+          ? "Film nie został załadowany. Wyświetlono ekran końcowy."
+          : ""}
       </p>
     </main>
   );

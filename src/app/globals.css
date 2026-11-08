@@ -770,42 +770,6 @@ a.social-button:active {
   margin-top: 0;
 }
 
-.intro-play-button {
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 1px solid rgba(199, 24, 39, 0.78);
-  border-radius: 5px;
-  background: rgba(26, 5, 8, 0.84);
-  color: #f5f1ed;
-  font-family: var(--font-display), serif;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  box-shadow: 0 0 22px rgba(185, 12, 28, 0.16);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  cursor: pointer;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
-}
-
-.intro-play-button:hover {
-  border-color: rgba(236, 43, 59, 0.96);
-  background: rgba(54, 7, 13, 0.9);
-}
-
-.intro-play-button:active {
-  transform: scale(0.985);
-}
-
-.intro-play-button:focus-visible {
-  outline: 2px solid #ff4356;
-  outline-offset: 3px;
-}
-
 @media (min-width: 640px) {
   .final-actions {
     bottom: max(28px, env(safe-area-inset-bottom));
